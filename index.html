@@ -3,180 +3,301 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Inter-AIDC 全光交换网络流量调度仿真</title>
+<title>Inter-AIDC 全光网络流量调度仿真 v2</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Sora:wght@300;400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Sora:wght@300;400;600;700&display=swap');
 
-  :root {
-    --bg: #05080f;
-    --panel: #0a0f1e;
-    --border: #1a2540;
-    --accent-ts: #00e5ff;
-    --accent-be: #ff6b35;
-    --accent-relay: #a8ff3e;
-    --accent-gold: #ffd60a;
-    --text: #c8d8f0;
-    --text-dim: #4a6080;
-  }
+:root {
+  --bg: #05080f;
+  --panel: #0a0f1e;
+  --panel2: #0d1425;
+  --border: #1a2540;
+  --border-bright: #243050;
+  --accent-ts: #00e5ff;
+  --accent-be: #ff6b35;
+  --accent-relay: #a8ff3e;
+  --accent-gold: #ffd60a;
+  --accent-purple: #b580ff;
+  --text: #c8d8f0;
+  --text-dim: #4a6080;
+  --text-mid: #7a9ab8;
+  --danger: #ff4444;
+  --success: #22c55e;
+}
 
-  * { margin:0; padding:0; box-sizing:border-box; }
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Sora', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+body::before {
+  content:''; position:fixed; inset:0;
+  background:
+    radial-gradient(ellipse 70% 50% at 15% 5%,  rgba(0,229,255,0.05) 0%, transparent 55%),
+    radial-gradient(ellipse 50% 70% at 85% 85%,  rgba(255,107,53,0.05) 0%, transparent 55%),
+    radial-gradient(ellipse 40% 40% at 50% 50%,  rgba(181,128,255,0.03) 0%, transparent 60%);
+  pointer-events:none; z-index:0;
+}
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Sora', sans-serif;
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
+.wrapper { position:relative; z-index:1; max-width:1280px; margin:0 auto; padding:20px 24px; }
 
-  body::before {
-    content:''; position:fixed; inset:0;
-    background:
-      radial-gradient(ellipse 60% 40% at 20% 10%, rgba(0,229,255,0.04) 0%, transparent 60%),
-      radial-gradient(ellipse 40% 60% at 80% 80%, rgba(255,107,53,0.04) 0%, transparent 60%);
-    pointer-events:none; z-index:0;
-  }
+/* ── 顶部标题 ── */
+header { text-align:center; margin-bottom:24px; }
+.badge {
+  display:inline-flex; align-items:center; gap:8px;
+  background: linear-gradient(90deg, rgba(0,229,255,0.08), rgba(168,255,62,0.08));
+  border: 1px solid rgba(0,229,255,0.2);
+  border-radius: 24px; padding: 5px 18px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; letter-spacing: 2.5px;
+  color: var(--accent-ts); margin-bottom: 14px;
+  text-transform: uppercase;
+}
+.badge::before { content:''; width:6px; height:6px; background:var(--accent-ts); border-radius:50%; animation:pulse 1.5s ease-in-out infinite; }
+h1 {
+  font-size: clamp(18px, 2.8vw, 28px); font-weight:700; letter-spacing:-0.5px;
+  background: linear-gradient(135deg, #fff 20%, var(--accent-ts) 60%, var(--accent-relay));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  margin-bottom:6px;
+}
+.subtitle { font-size:12px; color:var(--text-dim); font-family:'JetBrains Mono',monospace; letter-spacing:0.5px; }
 
-  .wrapper { position:relative; z-index:1; max-width:1200px; margin:0 auto; padding:24px; }
+/* ── 参数控制面板 ── */
+.controls { display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin-bottom:16px; }
+@media(max-width:900px){ .controls{ grid-template-columns:repeat(3,1fr); } }
+.ctrl-card {
+  background: var(--panel); border:1px solid var(--border);
+  border-radius:10px; padding:12px 14px;
+  transition: border-color 0.2s;
+}
+.ctrl-card:hover { border-color: var(--border-bright); }
+.ctrl-card.gamma-card { background: rgba(168,255,62,0.04); border-color: rgba(168,255,62,0.15); }
+.ctrl-label {
+  font-size:10px; color:var(--text-dim);
+  font-family:'JetBrains Mono',monospace; letter-spacing:0.8px;
+  margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;
+}
+.ctrl-val { color:var(--accent-ts); font-weight:700; font-size:12px; }
+.ctrl-val.gamma-val { color:var(--accent-relay); }
+.gamma-hint { font-size:9px; color:var(--text-dim); margin-top:5px; }
 
-  header { text-align:center; margin-bottom:32px; position: relative; }
-  .badge {
-    display:inline-block;
-    background: linear-gradient(90deg, rgba(0,229,255,0.1), rgba(168,255,62,0.1));
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 4px 16px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 2px;
-    color: var(--accent-ts);
-    margin-bottom: 16px;
-    text-transform: uppercase;
-  }
-  h1 {
-    font-size: clamp(20px, 3vw, 30px);
-    font-weight: 700;
-    letter-spacing: -0.5px;
-    background: linear-gradient(135deg, #fff 30%, var(--accent-ts));
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    margin-bottom: 8px;
-  }
-  .subtitle { font-size: 13px; color: var(--text-dim); font-family: 'JetBrains Mono', monospace; }
+input[type=range] {
+  width:100%; -webkit-appearance:none; appearance:none;
+  height:3px; background:var(--border); border-radius:2px; outline:none; cursor:pointer;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance:none; width:13px; height:13px; border-radius:50%;
+  background:var(--accent-ts); box-shadow:0 0 6px var(--accent-ts); cursor:pointer;
+}
 
-  /* 参数控制区 */
-  .controls {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 12px;
-    margin-bottom: 24px;
-  }
-  .ctrl-card {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 14px 16px;
-  }
-  .ctrl-label {
-    font-size: 11px; color: var(--text-dim);
-    font-family: 'JetBrains Mono', monospace;
-    margin-bottom: 8px;
-    display: flex; justify-content: space-between; align-items: center;
-  }
-  .ctrl-val { color: var(--accent-ts); font-weight: 700; }
-  .ctrl-val.gamma { color: var(--accent-relay); }
-  
-  input[type=range] {
-    width: 100%; -webkit-appearance: none; appearance: none;
-    height: 3px; background: var(--border); border-radius: 2px; outline: none;
-    cursor: pointer;
-  }
-  input[type=range]::-webkit-slider-thumb {
-    -webkit-appearance: none; width: 14px; height: 14px;
-    border-radius: 50%; background: var(--accent-ts);
-    box-shadow: 0 0 8px var(--accent-ts); cursor: pointer;
-  }
+/* ── 速度控制 ── */
+.speed-wrap { display:flex; align-items:center; gap:6px; margin-top:6px; }
+.speed-btn {
+  width:22px; height:22px; border-radius:5px; border:1px solid var(--border);
+  background:transparent; color:var(--text-dim); font-size:11px; cursor:pointer;
+  display:flex; align-items:center; justify-content:center; transition:all 0.15s;
+  font-family:'JetBrains Mono',monospace;
+}
+.speed-btn.active, .speed-btn:hover { border-color:var(--accent-ts); color:var(--accent-ts); background:rgba(0,229,255,0.06); }
 
-  /* 按钮与状态区 */
-  .btn-row { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center;}
-  .btn {
-    padding: 10px 24px; border-radius: 8px; font-size: 13px; font-weight: 600;
-    cursor: pointer; border: none; font-family: 'Sora', sans-serif;
-    transition: all 0.2s;
-  }
-  .btn-primary { background: var(--accent-ts); color: #000; box-shadow: 0 0 16px rgba(0,229,255,0.3); }
-  .btn-primary:hover { box-shadow: 0 0 24px rgba(0,229,255,0.5); transform: translateY(-1px); }
-  .btn-secondary { background: transparent; color: var(--text); border: 1px solid var(--border); }
-  .btn-secondary:hover { border-color: var(--accent-ts); color: var(--accent-ts); }
-  .btn-danger { background: transparent; color: var(--accent-be); border: 1px solid rgba(255,107,53,0.3); }
-  .btn-danger:hover { background: rgba(255,107,53,0.1); }
-  .btn-strategy { background: #1a2540; color: #fff; border: 1px solid #4488ff; }
+/* ── 按钮行 ── */
+.btn-row { display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap; align-items:center; }
+.btn {
+  padding:9px 18px; border-radius:8px; font-size:12px; font-weight:600;
+  cursor:pointer; border:none; font-family:'Sora',sans-serif; transition:all 0.18s;
+  white-space:nowrap;
+}
+.btn-primary { background:var(--accent-ts); color:#000; box-shadow:0 0 14px rgba(0,229,255,0.25); }
+.btn-primary:hover { box-shadow:0 0 22px rgba(0,229,255,0.45); transform:translateY(-1px); }
+.btn-secondary { background:transparent; color:var(--text); border:1px solid var(--border); }
+.btn-secondary:hover { border-color:var(--accent-ts); color:var(--accent-ts); }
+.btn-danger { background:transparent; color:var(--accent-be); border:1px solid rgba(255,107,53,0.3); }
+.btn-danger:hover { background:rgba(255,107,53,0.08); transform:translateY(-1px); }
+.btn-strategy {
+  background:var(--panel2); border:1px solid #3366cc;
+  color:#88aaff; font-size:12px;
+}
+.btn-strategy:hover { border-color:#5588ff; color:#aaccff; }
+.btn-strategy.baseline { border-color:rgba(255,107,53,0.5); color:var(--accent-be); }
 
-  .mode-indicator {
-    display: inline-flex; align-items: center; gap: 6px;
-    background: rgba(0,229,255,0.08); border: 1px solid rgba(0,229,255,0.2);
-    border-radius: 6px; padding: 6px 12px; font-size: 11px;
-    font-family: 'JetBrains Mono', monospace; color: var(--accent-ts);
-  }
-  .mode-indicator .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent-ts); animation: pulse 1.2s ease-in-out infinite; }
-  
-  .burst-indicator {
-    display: inline-flex; align-items: center; gap: 6px;
-    background: rgba(255,107,53,0.08); border: 1px solid rgba(255,107,53,0.3);
-    border-radius: 6px; padding: 6px 12px; font-size: 11px; font-weight: bold;
-    font-family: 'JetBrains Mono', monospace; color: var(--accent-be);
-    opacity: 0.3; transition: opacity 0.3s;
-  }
-  .burst-indicator.active { opacity: 1; box-shadow: 0 0 10px rgba(255,107,53,0.2); }
+.mode-indicator {
+  display:inline-flex; align-items:center; gap:6px;
+  background:rgba(0,229,255,0.07); border:1px solid rgba(0,229,255,0.18);
+  border-radius:6px; padding:5px 11px; font-size:10px;
+  font-family:'JetBrains Mono',monospace; color:var(--accent-ts);
+}
+.mode-indicator.baseline-mode { background:rgba(255,107,53,0.07); border-color:rgba(255,107,53,0.25); color:var(--accent-be); }
+.dot { width:6px; height:6px; border-radius:50%; background:var(--accent-ts); animation:pulse 1.2s ease-in-out infinite; flex-shrink:0; }
+.dot.red { background:var(--accent-be); }
 
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+.burst-indicator {
+  display:inline-flex; align-items:center; gap:5px;
+  background:rgba(255,107,53,0.06); border:1px solid rgba(255,107,53,0.2);
+  border-radius:6px; padding:5px 11px; font-size:10px; font-weight:600;
+  font-family:'JetBrains Mono',monospace; color:var(--accent-be);
+  opacity:0.3; transition:all 0.3s;
+}
+.burst-indicator.active { opacity:1; box-shadow:0 0 12px rgba(255,107,53,0.2); animation:blink 0.8s ease-in-out infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.6} }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.25} }
 
-  /* 布局与画布 */
-  .sim-area { display: grid; grid-template-columns: 1fr 320px; gap: 16px; margin-bottom: 16px; }
-  .canvas-wrap { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; position: relative; }
-  canvas#net { width:100%; display:block; }
+/* ── 主区域布局 ── */
+.sim-area { display:grid; grid-template-columns:1fr 310px; gap:14px; margin-bottom:14px; }
+@media(max-width:900px){ .sim-area{ grid-template-columns:1fr; } }
+.canvas-wrap {
+  background:var(--panel); border:1px solid var(--border);
+  border-radius:12px; overflow:hidden; position:relative;
+}
+canvas#net { width:100%; display:block; }
 
-  .stats-panel { display: flex; flex-direction: column; gap: 12px; }
-  .stat-card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 16px; flex: 1; }
-  .stat-title { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-dim); font-family: 'JetBrains Mono', monospace; margin-bottom: 12px; }
-  .metric { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-  .metric-name { font-size: 12px; color: var(--text-dim); }
-  .metric-val { font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 700; }
-  .metric-val.ts  { color: var(--accent-ts); }
-  .metric-val.be  { color: var(--accent-be); }
-  .metric-val.relay{ color: var(--accent-relay); }
-  .metric-val.gold { color: var(--accent-gold); }
+/* 队列告警覆盖层 */
+.queue-alert {
+  position:absolute; top:8px; left:8px; right:8px;
+  background:rgba(255,68,68,0.9); border-radius:6px;
+  padding:4px 10px; font-size:10px; font-family:'JetBrains Mono',monospace;
+  color:#fff; font-weight:700; display:none; z-index:10;
+  animation:blink 0.5s ease-in-out infinite;
+}
+.queue-alert.show { display:block; }
 
-  /* 队列可视化 */
-  .queue-vis { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
-  .queue-row { margin-bottom: 10px; }
-  .queue-label { font-size: 11px; color: var(--text-dim); margin-bottom: 4px; font-family: 'JetBrains Mono', monospace; display:flex; justify-content:space-between; }
-  .queue-bar-bg { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
-  .queue-bar { height: 100%; border-radius: 4px; transition: width 0.3s; }
-  .queue-bar.ts   { background: linear-gradient(90deg, var(--accent-ts), #0099aa); }
-  .queue-bar.be1  { background: linear-gradient(90deg, var(--accent-be), #cc4422); }
-  .queue-bar.relay{ background: linear-gradient(90deg, var(--accent-relay), #66cc22); }
+/* ── 右侧统计面板 ── */
+.stats-panel { display:flex; flex-direction:column; gap:10px; }
+.stat-card {
+  background:var(--panel); border:1px solid var(--border);
+  border-radius:10px; padding:14px; flex:1;
+}
+.stat-title {
+  font-size:9px; letter-spacing:1.8px; text-transform:uppercase;
+  color:var(--text-dim); font-family:'JetBrains Mono',monospace;
+  margin-bottom:11px; display:flex; justify-content:space-between; align-items:center;
+}
+.metric { display:flex; justify-content:space-between; align-items:center; margin-bottom:7px; }
+.metric-name { font-size:11px; color:var(--text-mid); }
+.metric-val { font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:700; transition:color 0.3s; }
+.metric-val.ts    { color:var(--accent-ts); }
+.metric-val.be    { color:var(--accent-be); }
+.metric-val.relay { color:var(--accent-relay); }
+.metric-val.gold  { color:var(--accent-gold); }
+.metric-val.alert { color:var(--danger) !important; animation:blink 0.6s infinite; }
 
-  /* 公式与图表 */
-  .formula-area { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 16px; }
-  .formula-title { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-dim); font-family: 'JetBrains Mono', monospace; margin-bottom: 12px; }
-  .formula-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
-  .formula-item { background: rgba(0,229,255,0.04); border: 1px solid rgba(0,229,255,0.1); border-radius: 8px; padding: 12px; text-align: center; }
-  .formula-name { font-size: 10px; color: var(--text-dim); margin-bottom: 6px; }
-  .formula-eq { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--accent-ts); margin-bottom: 4px;}
-  .formula-live { font-size: 18px; font-weight: 700; color: #fff; font-family: 'JetBrains Mono', monospace; }
+/* ── 队列可视化 ── */
+.queue-vis { background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:14px; }
+.queue-row { margin-bottom:9px; }
+.queue-label {
+  font-size:10px; color:var(--text-dim); margin-bottom:4px;
+  font-family:'JetBrains Mono',monospace; display:flex; justify-content:space-between;
+}
+.queue-label .q-pct { font-weight:700; }
+.queue-bar-bg { height:7px; background:var(--border); border-radius:4px; overflow:hidden; }
+.queue-bar { height:100%; border-radius:4px; transition:width 0.25s, background 0.3s; }
+.queue-bar.ts    { background:linear-gradient(90deg,var(--accent-ts),#0088aa); }
+.queue-bar.be1   { background:linear-gradient(90deg,var(--accent-be),#bb3311); }
+.queue-bar.relay { background:linear-gradient(90deg,var(--accent-relay),#55bb11); }
+.queue-bar.danger{ background:linear-gradient(90deg,#ff4444,#cc1111) !important; }
 
-  .chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
-  .chart-card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
-  .chart-card canvas { width:100%; display:block; }
+/* ── 权重拆解面板（新增）── */
+.weight-panel {
+  background:var(--panel); border:1px solid var(--border);
+  border-radius:10px; padding:14px;
+}
+.weight-row { display:flex; gap:8px; margin-top:8px; }
+.weight-item { flex:1; text-align:center; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:7px; padding:8px 4px; }
+.weight-item-label { font-size:9px; color:var(--text-dim); font-family:'JetBrains Mono',monospace; margin-bottom:3px; }
+.weight-item-val { font-size:16px; font-weight:700; font-family:'JetBrains Mono',monospace; }
+.w-alpha { color:var(--accent-ts); }
+.w-beta  { color:var(--accent-relay); }
+.w-gamma { color:var(--accent-purple); }
+.w-total { color:var(--accent-gold); }
+.weight-bar-row { display:flex; gap:3px; height:5px; margin-top:6px; border-radius:3px; overflow:hidden; }
+.wb-alpha { background:var(--accent-ts); transition:flex 0.3s; }
+.wb-beta  { background:var(--accent-relay); transition:flex 0.3s; }
+.wb-gamma { background:var(--accent-purple); transition:flex 0.3s; }
 
-  /* 日志 */
-  .log-area { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; height: 120px; overflow-y: auto; font-family: 'JetBrains Mono', monospace; font-size: 11px; }
-  .log-line { padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,0.03); }
-  .log-line.ts   { color: var(--accent-ts); }
-  .log-line.be   { color: var(--accent-be); }
-  .log-line.relay{ color: var(--accent-relay); }
-  .log-line.info { color: var(--text-dim); }
-  .log-line.warn { color: var(--accent-gold); font-weight: bold; }
+/* ── 排队论公式面板 ── */
+.formula-area {
+  background:var(--panel); border:1px solid var(--border);
+  border-radius:10px; padding:14px; margin-bottom:14px;
+}
+.formula-title {
+  font-size:9px; letter-spacing:1.8px; text-transform:uppercase;
+  color:var(--text-dim); font-family:'JetBrains Mono',monospace; margin-bottom:10px;
+}
+.formula-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:10px; }
+@media(max-width:900px){ .formula-grid{ grid-template-columns:repeat(3,1fr); } }
+.formula-item {
+  background:rgba(0,229,255,0.03); border:1px solid rgba(0,229,255,0.08);
+  border-radius:8px; padding:10px 8px; text-align:center;
+}
+.formula-name  { font-size:9px; color:var(--text-dim); margin-bottom:4px; line-height:1.3; }
+.formula-eq    { font-family:'JetBrains Mono',monospace; font-size:9px; color:rgba(0,229,255,0.6); margin-bottom:5px; }
+.formula-live  { font-size:17px; font-weight:700; color:#fff; font-family:'JetBrains Mono',monospace; }
+
+/* ── 图表区 ── */
+.chart-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px; }
+@media(max-width:700px){ .chart-row{ grid-template-columns:1fr; } }
+.chart-card {
+  background:var(--panel); border:1px solid var(--border);
+  border-radius:10px; padding:14px; position:relative;
+}
+.chart-card canvas { width:100%; display:block; }
+.chart-header {
+  display:flex; justify-content:space-between; align-items:center;
+  margin-bottom:8px;
+}
+.chart-title { font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-dim); font-family:'JetBrains Mono',monospace; }
+.chart-legend { display:flex; gap:10px; }
+.leg-item { display:flex; align-items:center; gap:4px; font-size:9px; color:var(--text-mid); font-family:'JetBrains Mono',monospace; }
+.leg-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+.strategy-tag {
+  position:absolute; top:10px; right:10px;
+  font-size:8px; font-family:'JetBrains Mono',monospace;
+  padding:2px 7px; border-radius:4px; font-weight:700;
+  background:rgba(0,229,255,0.1); color:var(--accent-ts); border:1px solid rgba(0,229,255,0.2);
+}
+.strategy-tag.bl { background:rgba(255,107,53,0.1); color:var(--accent-be); border-color:rgba(255,107,53,0.2); }
+
+/* ── 对比面板（新增）── */
+.compare-area {
+  background:var(--panel); border:1px solid var(--border);
+  border-radius:10px; padding:14px; margin-bottom:14px;
+}
+.compare-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px; }
+.compare-col {
+  background:rgba(255,255,255,0.02); border-radius:8px; padding:10px 12px;
+  border:1px solid var(--border);
+}
+.compare-col.proposed { border-color:rgba(0,229,255,0.2); }
+.compare-col.baseline { border-color:rgba(255,107,53,0.2); }
+.compare-col-title { font-size:10px; font-weight:700; margin-bottom:8px; font-family:'JetBrains Mono',monospace; }
+.compare-col.proposed .compare-col-title { color:var(--accent-ts); }
+.compare-col.baseline .compare-col-title { color:var(--accent-be); }
+.compare-metric { display:flex; justify-content:space-between; font-size:10px; margin-bottom:5px; color:var(--text-mid); }
+.compare-metric span:last-child { font-weight:700; font-family:'JetBrains Mono',monospace; color:var(--text); }
+.delta-row { display:flex; justify-content:space-between; font-size:11px; margin-top:8px; padding-top:8px; border-top:1px solid var(--border); }
+.delta-val { font-family:'JetBrains Mono',monospace; font-weight:700; font-size:12px; }
+.delta-val.better { color:var(--success); }
+.delta-val.worse  { color:var(--danger); }
+
+/* ── 日志区 ── */
+.log-area {
+  background:var(--panel); border:1px solid var(--border);
+  border-radius:10px; padding:10px 14px;
+  height:110px; overflow-y:auto;
+  font-family:'JetBrains Mono',monospace; font-size:10px;
+  scrollbar-width:thin; scrollbar-color:var(--border) transparent;
+}
+.log-area::-webkit-scrollbar { width:4px; }
+.log-area::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+.log-line { padding:2px 0; border-bottom:1px solid rgba(255,255,255,0.02); line-height:1.4; }
+.log-line.ts    { color:var(--accent-ts); }
+.log-line.be    { color:var(--accent-be); }
+.log-line.relay { color:var(--accent-relay); }
+.log-line.info  { color:var(--text-dim); }
+.log-line.warn  { color:var(--accent-gold); font-weight:700; }
+.log-line.cmp   { color:var(--accent-purple); }
 </style>
 </head>
 <body>
@@ -184,82 +305,126 @@
 
   <header>
     <div class="badge">OFC 2026 · Tu2C.6 · BUPT · 智能信息网络课程</div>
-    <h1>Inter-AIDC 全光网络流量调度与碰撞控制</h1>
-    <div class="subtitle">M/G/1 排队论模型 | MMPP 突发流量建模 | 动态权重调度策略</div>
+    <h1>Inter-AIDC 全光交换网络 流量调度与碰撞控制仿真</h1>
+    <div class="subtitle">M/G/1 优先级排队论 &nbsp;|&nbsp; MMPP 突发流量建模 &nbsp;|&nbsp; 动态权重调度 W = α·(R_dmin/R_d) + β·(C_F/C_max) + γ·(T/T_max)</div>
   </header>
 
-  <!-- 参数面板 -->
+  <!-- 参数控制面板 -->
   <div class="controls">
     <div class="ctrl-card">
-      <div class="ctrl-label">基本TS负载(λ_ts) <span class="ctrl-val" id="vLts">0.40</span></div>
+      <div class="ctrl-label">基本TS负载 λ_ts <span class="ctrl-val" id="vLts">0.40</span></div>
       <input type="range" id="rLts" min="0.1" max="0.7" step="0.01" value="0.40">
     </div>
     <div class="ctrl-card">
-      <div class="ctrl-label">基本BE负载(λ_be) <span class="ctrl-val" id="vLbe">0.30</span></div>
+      <div class="ctrl-label">基本BE负载 λ_be <span class="ctrl-val" id="vLbe">0.30</span></div>
       <input type="range" id="rLbe" min="0.05" max="0.6" step="0.01" value="0.30">
     </div>
     <div class="ctrl-card">
-      <div class="ctrl-label">权重 α (延迟优先) <span class="ctrl-val" id="vAlpha">0.33</span></div>
+      <div class="ctrl-label">权重 α (延迟敏感) <span class="ctrl-val" id="vAlpha">0.33</span></div>
       <input type="range" id="rAlpha" min="0.0" max="1.0" step="0.01" value="0.33">
     </div>
     <div class="ctrl-card">
-      <div class="ctrl-label">权重 β (缓存优先) <span class="ctrl-val" id="vBeta">0.50</span></div>
+      <div class="ctrl-label">权重 β (缓存压力) <span class="ctrl-val" id="vBeta">0.50</span></div>
       <input type="range" id="rBeta" min="0.0" max="1.0" step="0.01" value="0.50">
     </div>
-    <div class="ctrl-card" style="background: rgba(168,255,62,0.05);">
-      <div class="ctrl-label">防饥饿因子 γ <span class="ctrl-val gamma" id="vGamma">0.17</span></div>
-      <div style="font-size: 10px; color:var(--text-dim); margin-top:4px;">自动计算: γ = max(0, 1-α-β)</div>
+    <div class="ctrl-card gamma-card">
+      <div class="ctrl-label">防饥饿因子 γ <span class="ctrl-val gamma-val" id="vGamma">0.17</span></div>
+      <div class="gamma-hint">自动计算: γ = max(0, 1 − α − β)</div>
+      <div style="margin-top:8px;">
+        <div class="ctrl-label" style="margin-bottom:4px;">仿真速度</div>
+        <div class="speed-wrap">
+          <button class="speed-btn active" data-speed="1">1×</button>
+          <button class="speed-btn" data-speed="2">2×</button>
+          <button class="speed-btn" data-speed="4">4×</button>
+          <button class="speed-btn" data-speed="8">8×</button>
+        </div>
+      </div>
     </div>
   </div>
 
+  <!-- 按钮行 -->
   <div class="btn-row">
-    <button class="btn btn-primary" id="btnStart">▶ 开始仿真</button>
+    <button class="btn btn-primary"   id="btnStart">▶ 开始仿真</button>
     <button class="btn btn-secondary" id="btnPause">⏸ 暂停</button>
     <button class="btn btn-secondary" id="btnReset">↺ 重置</button>
-    <button class="btn btn-strategy" id="btnToggleStrategy">🔄 切换策略: [Proposed 权重调度]</button>
-    <button class="btn btn-danger"   id="btnCrash">⚡ 强制突发注入</button>
-    
-    <span class="mode-indicator" id="modeLabel"><span class="dot" id="modeDot"></span> <span id="strategyText">Proposed 分布式控制开启</span></span>
-    <span class="burst-indicator" id="burstLabel">🔥 AI 集群同步(突发期)</span>
+    <button class="btn btn-strategy"  id="btnToggle">🔄 切换策略: [Proposed 权重调度]</button>
+    <button class="btn btn-danger"    id="btnCrash">⚡ 强制突发注入</button>
+    <span class="mode-indicator" id="modeInd"><span class="dot" id="modeDot"></span><span id="modeText">Proposed 分布式控制开启</span></span>
+    <span class="burst-indicator" id="burstLabel">🔥 AI 集群同步 (突发期)</span>
   </div>
 
   <!-- 主仿真区 -->
   <div class="sim-area">
-    <div class="canvas-wrap"><canvas id="net" height="380"></canvas></div>
+    <div class="canvas-wrap">
+      <div class="queue-alert" id="queueAlert">⚠ 队列溢出风险！中继缓存已超80%</div>
+      <canvas id="net" height="370"></canvas>
+    </div>
     <div class="stats-panel">
+      <!-- 实时指标 -->
       <div class="stat-card">
         <div class="stat-title">实时网络指标</div>
-        <div class="metric"><span class="metric-name">TS 实时平均延迟</span> <span class="metric-val ts" id="mTsLat">—</span></div>
-        <div class="metric"><span class="metric-name">BE 平均排队延迟</span> <span class="metric-val be" id="mBe1Lat">—</span></div>
-        <div class="metric"><span class="metric-name">中继区排队占用率</span> <span class="metric-val relay" id="mRelayUtil">—</span></div>
-        <div class="metric"><span class="metric-name">总吞吐量 (S)</span> <span class="metric-val gold" id="mThroughput">—</span></div>
-        <div class="metric"><span class="metric-name">BE 丢包率 (Ploss)</span> <span class="metric-val be" id="mDropRate">—</span></div>
-        <div class="metric"><span class="metric-name">光时隙碰撞计数</span> <span class="metric-val ts" id="mCollisions">—</span></div>
+        <div class="metric"><span class="metric-name">TS 实时平均延迟</span>  <span class="metric-val ts"    id="mTsLat">—</span></div>
+        <div class="metric"><span class="metric-name">BE 平均排队延迟</span>  <span class="metric-val be"    id="mBe1Lat">—</span></div>
+        <div class="metric"><span class="metric-name">中继缓存占用率</span>   <span class="metric-val relay" id="mRelayUtil">—</span></div>
+        <div class="metric"><span class="metric-name">总吞吐量 (S)</span>     <span class="metric-val gold"  id="mThroughput">—</span></div>
+        <div class="metric"><span class="metric-name">BE 丢包率 (Ploss)</span><span class="metric-val be"    id="mDropRate">—</span></div>
+        <div class="metric"><span class="metric-name">光时隙碰撞计数</span>   <span class="metric-val ts"    id="mCollisions">—</span></div>
       </div>
+
+      <!-- 队列状态 -->
       <div class="queue-vis">
-        <div class="stat-title">节点队列状态 (最大64KB)</div>
+        <div class="stat-title">节点队列状态 (最大 64 KB)</div>
         <div class="queue-row">
-          <div class="queue-label"><span>[GW1] TS 队列</span><span id="qTs">0%</span></div>
+          <div class="queue-label"><span>[GW1] TS 队列</span><span class="q-pct" id="qTs">0%</span></div>
           <div class="queue-bar-bg"><div class="queue-bar ts" id="bTs" style="width:0%"></div></div>
         </div>
         <div class="queue-row">
-          <div class="queue-label"><span>[GW2] BE1 队列</span><span id="qBe1">0%</span></div>
+          <div class="queue-label"><span>[GW2] BE1 队列</span><span class="q-pct" id="qBe1">0%</span></div>
           <div class="queue-bar-bg"><div class="queue-bar be1" id="bBe1" style="width:0%"></div></div>
         </div>
         <div class="queue-row">
-          <div class="queue-label"><span>[GW2] 旁路中继 (Relay)</span><span id="qRelay">0%</span></div>
+          <div class="queue-label"><span>[GW2] 旁路中继 (Relay)</span><span class="q-pct" id="qRelay">0%</span></div>
           <div class="queue-bar-bg"><div class="queue-bar relay" id="bRelay" style="width:0%"></div></div>
+        </div>
+      </div>
+
+      <!-- 权重分解面板（新增）-->
+      <div class="weight-panel">
+        <div class="stat-title">W 权重三项实时分解</div>
+        <div class="weight-row">
+          <div class="weight-item">
+            <div class="weight-item-label">α·(Rd_min/Rd)</div>
+            <div class="weight-item-val w-alpha" id="wAlpha">0.00</div>
+          </div>
+          <div class="weight-item">
+            <div class="weight-item-label">β·(C_F/C_max)</div>
+            <div class="weight-item-val w-beta" id="wBeta">0.00</div>
+          </div>
+          <div class="weight-item">
+            <div class="weight-item-label">γ·(T/T_max)</div>
+            <div class="weight-item-val w-gamma" id="wGamma">0.00</div>
+          </div>
+          <div class="weight-item" style="border-color:rgba(255,214,10,0.2);">
+            <div class="weight-item-label">W 总值</div>
+            <div class="weight-item-val w-total" id="wTotal">0.00</div>
+          </div>
+        </div>
+        <!-- 权重比例条 -->
+        <div class="weight-bar-row" id="wBar">
+          <div class="wb-alpha" id="wbA" style="flex:0.33"></div>
+          <div class="wb-beta"  id="wbB" style="flex:0.50"></div>
+          <div class="wb-gamma" id="wbG" style="flex:0.17"></div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- 公式面板 -->
+  <!-- 排队论公式动态面板 -->
   <div class="formula-area">
-    <div class="formula-title">M/G/1 优先级队列动态计算</div>
+    <div class="formula-title">M/G/1 优先级排队论动态计算</div>
     <div class="formula-grid">
       <div class="formula-item">
-        <div class="formula-name">突发修正到达率 λ'</div>
+        <div class="formula-name">MMPP 修正到达率 λ'</div>
         <div class="formula-eq">MMPP 状态影响</div>
         <div class="formula-live" id="fLambda">0.00</div>
       </div>
@@ -269,28 +434,75 @@
         <div class="formula-live" id="fRho">0.000</div>
       </div>
       <div class="formula-item">
-        <div class="formula-name">多维加权调度函数 W</div>
+        <div class="formula-name">多维调度权重 W</div>
         <div class="formula-eq">Eq.(1) 决定服务率</div>
         <div class="formula-live" id="fW">0.000</div>
       </div>
       <div class="formula-item">
-        <div class="formula-name">Little's Law 中继队列 L</div>
+        <div class="formula-name">Little's Law 队列长度 L</div>
         <div class="formula-eq">L = λ_relay · W_be</div>
         <div class="formula-live" id="fL">0.00</div>
       </div>
       <div class="formula-item">
-        <div class="formula-name">理论 TS 极值等待时间</div>
+        <div class="formula-name">P-K 公式 TS 等待时间</div>
         <div class="formula-eq">W_ts = λE[S²]/2(1-ρ_ts)</div>
         <div class="formula-live" id="fWts">0.00 ms</div>
       </div>
     </div>
   </div>
 
+  <!-- 时序图表（带Y轴刻度和图例）-->
   <div class="chart-row">
-    <div class="chart-card"><div class="stat-title">时延对比曲线 (蓝:TS | 橙:BE)</div><canvas id="chartLat" height="120"></canvas></div>
-    <div class="chart-card"><div class="stat-title">吞吐量波动曲线</div><canvas id="chartThr" height="120"></canvas></div>
+    <div class="chart-card">
+      <div class="chart-header">
+        <div class="chart-title">延迟时序对比</div>
+        <div class="chart-legend">
+          <div class="leg-item"><div class="leg-dot" style="background:#00e5ff"></div>TS</div>
+          <div class="leg-item"><div class="leg-dot" style="background:#ff6b35"></div>BE</div>
+        </div>
+      </div>
+      <div class="strategy-tag" id="latTag">PROPOSED</div>
+      <canvas id="chartLat" height="110"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-header">
+        <div class="chart-title">吞吐量时序</div>
+        <div class="chart-legend">
+          <div class="leg-item"><div class="leg-dot" style="background:#a8ff3e"></div>S (Gbps)</div>
+        </div>
+      </div>
+      <div class="strategy-tag" id="thrTag">PROPOSED</div>
+      <canvas id="chartThr" height="110"></canvas>
+    </div>
   </div>
-  
+
+  <!-- 策略对比面板（新增）-->
+  <div class="compare-area">
+    <div class="formula-title">策略性能对比快照（切换策略后自动对比）</div>
+    <div class="compare-grid">
+      <div class="compare-col proposed">
+        <div class="compare-col-title">▶ Proposed — 动态权重调度</div>
+        <div class="compare-metric"><span>TS 平均延迟</span><span id="cPropTsLat">—</span></div>
+        <div class="compare-metric"><span>BE 平均延迟</span><span id="cPropBeLat">—</span></div>
+        <div class="compare-metric"><span>丢包率</span><span id="cPropDrop">—</span></div>
+        <div class="compare-metric"><span>吞吐量</span><span id="cPropThr">—</span></div>
+      </div>
+      <div class="compare-col baseline">
+        <div class="compare-col-title">▶ Baseline — 最长队列优先</div>
+        <div class="compare-metric"><span>TS 平均延迟</span><span id="cBaseTsLat">—</span></div>
+        <div class="compare-metric"><span>BE 平均延迟</span><span id="cBaseBeLat">—</span></div>
+        <div class="compare-metric"><span>丢包率</span><span id="cBaseDrop">—</span></div>
+        <div class="compare-metric"><span>吞吐量</span><span id="cBaseThr">—</span></div>
+      </div>
+    </div>
+    <div class="delta-row" id="deltaRow" style="margin-top:10px; padding-top:10px; border-top:1px solid var(--border); font-size:10px; color:var(--text-mid); display:none;">
+      <span>TS延迟提升: <span class="delta-val" id="dTsLat">—</span></span>
+      <span>吞吐量提升: <span class="delta-val" id="dThr">—</span></span>
+      <span>丢包率改善: <span class="delta-val" id="dDrop">—</span></span>
+    </div>
+  </div>
+
+  <!-- 日志 -->
   <div class="log-area" id="logArea"></div>
 
 </div>
@@ -298,338 +510,579 @@
 <script>
 const $ = id => document.getElementById(id);
 
-// --- 拓扑 ---
+// ══════════════════════════════════════
+// 拓扑定义（Spine-Leaf，Y轴拉长增加层次感）
+// ══════════════════════════════════════
 const NODES = {
-  spine1: { x:0.25, y:0.35, label:'Spine 1\n(Core)', role:'spine' },
-  spine2: { x:0.65, y:0.35, label:'Spine 2\n(Core)', role:'spine' },
-  leaf1:  { x:0.08, y:0.65, label:'Leaf 1', role:'leaf' },
-  leaf2:  { x:0.45, y:0.72, label:'Leaf 2', role:'leaf' },
-  leaf3:  { x:0.82, y:0.65, label:'Leaf 3', role:'leaf' },
-  gw1:    { x:0.08, y:0.92, label:'GW 1\n(AIDC A)', role:'gw' },
-  gw2:    { x:0.45, y:0.92, label:'GW 2\n(Relay/AIDC B)', role:'gw' },
-  gw3:    { x:0.82, y:0.92, label:'GW 3\n(AIDC C)', role:'gw' },
+  spine1: { x:0.28, y:0.28, label:'Spine 1\n(Core)', role:'spine' },
+  spine2: { x:0.68, y:0.28, label:'Spine 2\n(Core)', role:'spine' },
+  leaf1:  { x:0.10, y:0.58, label:'Leaf 1', role:'leaf' },
+  leaf2:  { x:0.48, y:0.62, label:'Leaf 2', role:'leaf' },
+  leaf3:  { x:0.85, y:0.58, label:'Leaf 3', role:'leaf' },
+  gw1:    { x:0.10, y:0.88, label:'GW 1\n(AIDC A)', role:'gw' },
+  gw2:    { x:0.48, y:0.88, label:'GW 2\n(Relay)', role:'gw' },
+  gw3:    { x:0.85, y:0.88, label:'GW 3\n(AIDC C)', role:'gw' },
 };
 const EDGES = [
-  ['spine1','spine2'],['spine1','leaf1'],['spine1','leaf2'],['spine1','leaf3'],['spine2','leaf1'],['spine2','leaf2'],['spine2','leaf3'],['leaf1','gw1'],['leaf2','gw2'],['leaf3','gw3'],
+  ['spine1','spine2'],
+  ['spine1','leaf1'],['spine1','leaf2'],['spine1','leaf3'],
+  ['spine2','leaf1'],['spine2','leaf2'],['spine2','leaf3'],
+  ['leaf1','gw1'],['leaf2','gw2'],['leaf3','gw3'],
 ];
 
-// --- 仿真状态 ---
-let running = false;
-let tick = 0;
-let simInterval = null;
+// ══════════════════════════════════════
+// 仿真状态
+// ══════════════════════════════════════
+let running=false, tick=0, simInterval=null, simSpeed=1;
 
 const SIM = {
-  strategy: 'proposed', // 'proposed' or 'baseline'
-  isTsBurstState: false, // MMPP (ON-OFF) 状态
-  
-  lts: 0.40, lbe: 0.30, alpha: 0.33, beta: 0.50, gamma: 0.17,
-  mu: 1.2, C_max: 64,
-
-  q_ts: 0, q_be1: 0, q_relay: 0,
-  
-  tsLatHistory: [], beLatHistory: [], thrHistory:[],
-  totalSent: 0, totalDropped: 0, collisions: 0,
-  tsLat: 0, be1Lat: 0, throughput: 0, relayUtil: 0,
-  
-  particles: [], flashes:[],
+  strategy:'proposed',
+  isTsBurstState:false,
+  lts:0.40, lbe:0.30, alpha:0.33, beta:0.50, gamma:0.17,
+  mu:1.2, C_max:64,
+  q_ts:0, q_be1:0, q_relay:0,
+  tsLatHistory:[], beLatHistory:[], thrHistory:[],
+  totalSent:0, totalDropped:0, collisions:0,
+  tsLat:0, be1Lat:0,
+  particles:[], flashes:[],
+  // 策略对比快照
+  snap: { proposed:null, baseline:null },
+  snapWindow: { ts:[], be:[], drop:[], thr:[] }, // 最近100 tick均值
 };
 
-// --- 事件绑定 ---
+// ══════════════════════════════════════
+// 参数绑定
+// ══════════════════════════════════════
 function updateGamma() {
-  SIM.gamma = Math.max(0, 1.0 - SIM.alpha - SIM.beta);
+  SIM.gamma = Math.max(0, parseFloat((1 - SIM.alpha - SIM.beta).toFixed(2)));
   $('vGamma').textContent = SIM.gamma.toFixed(2);
 }
-
-function bindRange(id, key, display) {
-  $(id).addEventListener('input', function() {
+function bindRange(id, key, disp) {
+  $(id).addEventListener('input', function(){
     SIM[key] = parseFloat(this.value);
-    $(display).textContent = SIM[key].toFixed(2);
-    if(key === 'alpha' || key === 'beta') updateGamma();
+    $(disp).textContent = SIM[key].toFixed(2);
+    if(key==='alpha'||key==='beta') updateGamma();
   });
 }
-bindRange('rLts', 'lts', 'vLts');
-bindRange('rLbe', 'lbe', 'vLbe');
-bindRange('rAlpha', 'alpha', 'vAlpha');
-bindRange('rBeta', 'beta', 'vBeta');
+bindRange('rLts','lts','vLts'); bindRange('rLbe','lbe','vLbe');
+bindRange('rAlpha','alpha','vAlpha'); bindRange('rBeta','beta','vBeta');
 
-function restartInterval() {
-  clearInterval(simInterval);
-  simInterval = setInterval(simStep, 50); // 每50ms演进一次
-}
-
-$('btnStart').addEventListener('click', () => { 
-  if(!running){ 
-    running=true; 
-    restartInterval(); 
-    addLog('仿真启动', 'ts'); 
-  } 
+// 速度按钮
+document.querySelectorAll('.speed-btn').forEach(btn => {
+  btn.addEventListener('click', function(){
+    document.querySelectorAll('.speed-btn').forEach(b=>b.classList.remove('active'));
+    this.classList.add('active');
+    simSpeed = parseInt(this.dataset.speed);
+    if(running) restartInterval();
+  });
 });
 
-$('btnPause').addEventListener('click', () => { 
-  running=false; 
-  clearInterval(simInterval); 
-  addLog('仿真暂停', 'info'); 
+// ══════════════════════════════════════
+// 控制按钮
+// ══════════════════════════════════════
+$('btnStart').addEventListener('click', ()=>{
+  if(!running){ running=true; restartInterval(); addLog('仿真启动 — Inter-AIDC 全光交换网络碰撞控制', 'ts'); }
 });
-
-$('btnReset').addEventListener('click', () => {
-  running = false; 
-  clearInterval(simInterval); 
-  tick = 0;
-  SIM.q_ts = 0; SIM.q_be1 = 0; SIM.q_relay = 0; 
-  SIM.collisions = 0; SIM.totalSent = 0; SIM.totalDropped = 0;
-  SIM.tsLatHistory = []; SIM.beLatHistory =[]; SIM.thrHistory = []; 
-  SIM.particles = []; SIM.flashes =[];
-  SIM.isTsBurstState = false;
+$('btnPause').addEventListener('click', ()=>{
+  running=false; clearInterval(simInterval);
+  // 保存当前策略快照
+  saveSnap();
+  addLog('仿真暂停，已保存当前策略指标快照', 'info');
+});
+$('btnReset').addEventListener('click', ()=>{
+  running=false; clearInterval(simInterval); tick=0;
+  Object.assign(SIM, {q_ts:0,q_be1:0,q_relay:0,collisions:0,totalSent:0,totalDropped:0,
+    tsLatHistory:[],beLatHistory:[],thrHistory:[],particles:[],flashes:[],isTsBurstState:false,
+    snapWindow:{ts:[],be:[],drop:[],thr:[]}, snap:{proposed:null,baseline:null}});
   $('burstLabel').classList.remove('active');
-  updateUI({rho:0, w_sched:0, relayDrainRate:0, beDrainRate:0}, SIM.lts, 0);
+  $('queueAlert').classList.remove('show');
+  resetCompareUI();
   drawNet(); drawLatChart(); drawThrChart();
   addLog('仿真已重置', 'info');
 });
-
-$('btnCrash').addEventListener('click', () => { 
-  SIM.isTsBurstState = true; 
-  injectBurst(); 
+$('btnCrash').addEventListener('click', ()=>{
+  SIM.isTsBurstState=true; SIM.q_ts+=30; SIM.q_be1+=20; SIM.q_relay+=15;
+  $('burstLabel').classList.add('active');
+  addLog('⚡ 外部强制注入微秒级突发流量风暴！MMPP ON 态激活', 'warn');
 });
-
-$('btnToggleStrategy').addEventListener('click', () => {
-  if (SIM.strategy === 'proposed') {
-    SIM.strategy = 'baseline';
-    $('btnToggleStrategy').textContent = '🔄 切换策略: [Baseline 最长队列优先]';
-    $('strategyText').textContent = 'Baseline 静态优先级';
-    $('modeDot').style.background = '#ff6b35';
-    addLog('[策略切换] 已切换至 Baseline (Longest-Queue-First)', 'warn');
+$('btnToggle').addEventListener('click', ()=>{
+  saveSnap(); // 切换前保存当前策略
+  if(SIM.strategy==='proposed'){
+    SIM.strategy='baseline';
+    $('btnToggle').textContent='🔄 切换策略: [Baseline 最长队列优先]';
+    $('btnToggle').classList.add('baseline');
+    $('modeText').textContent='Baseline 静态优先级';
+    $('modeDot').classList.add('red');
+    $('modeInd').classList.add('baseline-mode');
+    $('latTag').textContent='BASELINE'; $('latTag').classList.add('bl');
+    $('thrTag').textContent='BASELINE'; $('thrTag').classList.add('bl');
+    addLog('[策略切换] → Baseline (Longest-Queue-First)', 'warn');
   } else {
-    SIM.strategy = 'proposed';
-    $('btnToggleStrategy').textContent = '🔄 切换策略: [Proposed 权重调度]';
-    $('strategyText').textContent = 'Proposed 分布式控制开启';
-    $('modeDot').style.background = '#00e5ff';
-    addLog('[策略切换] 已切换至 Proposed (分布式权重调度机制)', 'ts');
+    SIM.strategy='proposed';
+    $('btnToggle').textContent='🔄 切换策略: [Proposed 权重调度]';
+    $('btnToggle').classList.remove('baseline');
+    $('modeText').textContent='Proposed 分布式控制开启';
+    $('modeDot').classList.remove('red');
+    $('modeInd').classList.remove('baseline-mode');
+    $('latTag').textContent='PROPOSED'; $('latTag').classList.remove('bl');
+    $('thrTag').textContent='PROPOSED'; $('thrTag').classList.remove('bl');
+    addLog('[策略切换] → Proposed (分布式权重调度)', 'ts');
   }
+  updateCompareUI();
 });
 
-// --- 画布与渲染 ---
-const netCanvas = $('net'); const netCtx = netCanvas.getContext('2d');
-const latCanvas = $('chartLat'); const latCtx = latCanvas.getContext('2d');
-const thrCanvas = $('chartThr'); const thrCtx = thrCanvas.getContext('2d');
-
-function resizeCanvas() {
-  netCanvas.width = netCanvas.parentElement.clientWidth; netCanvas.height = 380;
-  latCanvas.width = latCanvas.parentElement.clientWidth - 32; latCanvas.height = 120;
-  thrCanvas.width = thrCanvas.parentElement.clientWidth - 32; thrCanvas.height = 120;
+function saveSnap() {
+  const w = SIM.snapWindow;
+  if(w.ts.length < 5) return;
+  const avg = arr => arr.reduce((a,b)=>a+b,0)/arr.length;
+  SIM.snap[SIM.strategy] = {
+    tsLat: avg(w.ts).toFixed(1),
+    beLat: avg(w.be).toFixed(1),
+    drop:  (avg(w.drop)*100).toFixed(2),
+    thr:   avg(w.thr).toFixed(2),
+  };
+  updateCompareUI();
 }
-window.addEventListener('resize', () => { resizeCanvas(); drawNet(); });
+function updateCompareUI() {
+  const p = SIM.snap.proposed, b = SIM.snap.baseline;
+  if(p){ $('cPropTsLat').textContent=p.tsLat+' ms'; $('cPropBeLat').textContent=p.beLat+' ms'; $('cPropDrop').textContent=p.drop+'%'; $('cPropThr').textContent=p.thr+' Gbps'; }
+  if(b){ $('cBaseTsLat').textContent=b.tsLat+' ms'; $('cBaseBeLat').textContent=b.beLat+' ms'; $('cBaseDrop').textContent=b.drop+'%'; $('cBaseThr').textContent=b.thr+' Gbps'; }
+  if(p && b) {
+    $('deltaRow').style.display='flex';
+    const tsD = ((parseFloat(b.tsLat)-parseFloat(p.tsLat))/parseFloat(b.tsLat)*100);
+    const thrD= ((parseFloat(p.thr)-parseFloat(b.thr))/parseFloat(b.thr)*100);
+    const dropD=(parseFloat(b.drop)-parseFloat(p.drop));
+    setDelta('dTsLat', tsD.toFixed(1)+'%', tsD>0);
+    setDelta('dThr',   thrD.toFixed(1)+'%', thrD>0);
+    setDelta('dDrop',  dropD.toFixed(2)+'%pts', dropD>0);
+    addLog(`[对比] Proposed vs Baseline: TS延迟↓${tsD.toFixed(1)}% | 吞吐↑${thrD.toFixed(1)}% | 丢包↓${dropD.toFixed(2)}%pts`, 'cmp');
+  }
+}
+function setDelta(id, val, better) {
+  const el = $(id); el.textContent = (better?'▼ ':'▲ ')+val;
+  el.className = 'delta-val '+(better?'better':'worse');
+}
+function resetCompareUI() {
+  ['cPropTsLat','cPropBeLat','cPropDrop','cPropThr','cBaseTsLat','cBaseBeLat','cBaseDrop','cBaseThr'].forEach(id=>$(id).textContent='—');
+  $('deltaRow').style.display='none';
+}
+
+// ══════════════════════════════════════
+// Canvas 初始化
+// ══════════════════════════════════════
+const netCanvas=$('net'), netCtx=netCanvas.getContext('2d');
+const latCanvas=$('chartLat'), latCtx=latCanvas.getContext('2d');
+const thrCanvas=$('chartThr'), thrCtx=thrCanvas.getContext('2d');
+
+function resizeCanvas(){
+  netCanvas.width=netCanvas.parentElement.clientWidth; netCanvas.height=370;
+  latCanvas.width=latCanvas.parentElement.clientWidth-28; latCanvas.height=110;
+  thrCanvas.width=thrCanvas.parentElement.clientWidth-28; thrCanvas.height=110;
+}
+window.addEventListener('resize', ()=>{ resizeCanvas(); drawNet(); });
 resizeCanvas();
 
-function nodePos(k) { return { x: NODES[k].x*netCanvas.width, y: NODES[k].y*netCanvas.height }; }
+function nodePos(k){ return { x:NODES[k].x*netCanvas.width, y:NODES[k].y*netCanvas.height }; }
 
-function drawNet() {
-  const ctx = netCtx; const W = netCanvas.width, H = netCanvas.height;
-  ctx.clearRect(0,0,W,H);
-
-  ctx.strokeStyle = 'rgba(26,37,64,0.5)'; ctx.lineWidth = 0.5;
-  for(let x=0;x<W;x+=40){ ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke(); }
-  for(let y=0;y<H;y+=40){ ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke(); }
-
-  SIM.particles.forEach(p => {
-    const col = p.type==='ts'?'#00e5ff':p.type==='be'?'#ff6b35':'#a8ff3e';
-    const x = p.sx+(p.ex-p.sx)*p.progress, y = p.sy+(p.ey-p.sy)*p.progress;
-    ctx.save(); ctx.shadowColor=col; ctx.shadowBlur=10; ctx.fillStyle=col;
-    ctx.beginPath(); ctx.arc(x,y,4,0,Math.PI*2); ctx.fill(); ctx.restore();
-  });
-
-  SIM.flashes.forEach(f => {
-    const alpha = f.life/f.maxLife; ctx.save(); ctx.globalAlpha = alpha;
-    const grad = ctx.createRadialGradient(f.x,f.y,0,f.x,f.y,30*alpha);
-    grad.addColorStop(0,'rgba(255,214,10,0.8)'); grad.addColorStop(1,'transparent');
-    ctx.fillStyle=grad; ctx.beginPath(); ctx.arc(f.x,f.y,30,0,Math.PI*2); ctx.fill(); ctx.restore();
-  });
-
-  EDGES.forEach(([a,b]) => {
-    const pa = nodePos(a), pb = nodePos(b);
-    const active = SIM.particles.some(p => p.edge===a+'-'+b || p.edge===b+'-'+a);
-    ctx.save(); ctx.strokeStyle = active ? 'rgba(0,229,255,0.5)' : 'rgba(26,37,64,0.8)';
-    ctx.lineWidth = active ? 2 : 1; ctx.beginPath(); ctx.moveTo(pa.x,pa.y); ctx.lineTo(pb.x,pb.y); ctx.stroke(); ctx.restore();
-  });
-
-  Object.keys(NODES).forEach(key => {
-    const n = NODES[key], {x,y} = nodePos(key);
-    let color = n.role==='spine'?'#00e5ff':n.role==='leaf'?'#4488ff':'#a8ff3e';
-    let size = n.role==='spine'?18:14;
-    ctx.save(); ctx.shadowColor=color; ctx.shadowBlur=12;
-    ctx.beginPath(); ctx.arc(x,y,size,0,Math.PI*2); ctx.fillStyle=color+'22'; ctx.fill();
-    ctx.strokeStyle=color; ctx.lineWidth=1.5; ctx.stroke();
-    ctx.beginPath(); ctx.arc(x,y,size*0.4,0,Math.PI*2); ctx.fillStyle=color; ctx.fill();
-    ctx.fillStyle='#c8d8f0'; ctx.font='10px monospace'; ctx.textAlign='center';
-    n.label.split('\n').forEach((line,i) => ctx.fillText(line, x, y+size+14+i*12));
-    ctx.restore();
-  });
-  
-  // 渲染GW2的Relay占用光环
-  const rPos = nodePos('gw2');
-  const pct = Math.min(SIM.q_relay/SIM.C_max, 1);
-  ctx.save(); ctx.beginPath(); ctx.arc(rPos.x, rPos.y-30, 10, -Math.PI/2, -Math.PI/2 + pct*Math.PI*2);
-  ctx.lineTo(rPos.x, rPos.y-30); ctx.fillStyle = `rgba(168,255,62,${0.3+pct*0.5})`; ctx.fill(); ctx.restore();
-}
+// ══════════════════════════════════════
+// 粒子系统（支持曲线路径 + 尾迹）
+// ══════════════════════════════════════
+// 路径定义：通过控制点的弯曲路径
+const PATHS = {
+  // TS 正常路径
+  'gw1-leaf1':  {type:'line'},
+  'leaf1-spine1':{type:'line'},
+  'spine1-spine2':{type:'line'},
+  'spine2-leaf3':{type:'line'},
+  'leaf3-gw3':  {type:'line'},
+  // BE 路径
+  'gw2-leaf2':  {type:'line'},
+  'leaf2-spine1':{type:'curve', cx:-0.04, cy:-0.15},
+  // 中继路径（弧线绕道）
+  'spine1-gw2': {type:'curve', cx:-0.12, cy:0.15},
+};
 
 function spawnParticle(type, a, b) {
   const pa=nodePos(a), pb=nodePos(b);
-  SIM.particles.push({ type, sx:pa.x, sy:pa.y, ex:pb.x, ey:pb.y, progress:0, speed:0.04+Math.random()*0.02, edge:a+'-'+b });
+  const pathKey = a+'-'+b;
+  const W=netCanvas.width, H=netCanvas.height;
+  let cx=null, cy=null;
+  // 曲线路径：控制点相对于中点偏移
+  if(a==='leaf2' && b==='spine1'){ cx=(pa.x+pb.x)/2 + W*(-0.06); cy=(pa.y+pb.y)/2 + H*(-0.12); }
+  else if(a==='spine1' && b==='gw2'){ cx=(pa.x+pb.x)/2 + W*(-0.15); cy=(pa.y+pb.y)/2 + H*(0.1); }
+  SIM.particles.push({
+    type, sx:pa.x, sy:pa.y, ex:pb.x, ey:pb.y,
+    cx, cy, // 贝塞尔控制点（null则直线）
+    progress:0, speed:(0.022+Math.random()*0.012)*simSpeed,
+    trail:[], edge:pathKey
+  });
 }
 
-// --- 核心业务逻辑 ---
-function calcAndSchedule(currentLts) {
-  // 1. 物理排队理论计算 (M/G/1 优先级)
-  const lbe = SIM.lbe, mu = SIM.mu;
-  const rho_ts = currentLts / mu;
-  const rho_be = lbe / mu;
-  const rho = Math.min(rho_ts + rho_be, 0.99);
-
-  // 论文公式(1): 多维加权调度
-  let w_sched = 0;
-  if(SIM.strategy === 'proposed') {
-    // 归一化: α(延迟敏感度) + β(缓存压力) + γ(时间老化/防饥饿)
-    const p1 = SIM.alpha * (0.5 / (0.5 + (SIM.be1Lat||1)/1000));
-    const p2 = SIM.beta * (SIM.q_relay / SIM.C_max);
-    const p3 = SIM.gamma * ((tick%200)/200.0);
-    w_sched = p1 + p2 + p3;
+function getParticlePos(p, t){
+  if(p.cx !== null){
+    // 二次贝塞尔曲线
+    const x=(1-t)*(1-t)*p.sx + 2*(1-t)*t*p.cx + t*t*p.ex;
+    const y=(1-t)*(1-t)*p.sy + 2*(1-t)*t*p.cy + t*t*p.ey;
+    return {x,y};
   }
+  return { x:p.sx+(p.ex-p.sx)*t, y:p.sy+(p.ey-p.sy)*t };
+}
 
-  // 2. 模拟不同策略的出队服务率 (Dequeue / Drain)
-  let relayDrainRate = 0;
-  let beDrainRate = 0;
-  
-  if (SIM.strategy === 'proposed') {
-    // 提出的方案: W值决定中继队列可以抢占多少带宽
-    relayDrainRate = SIM.mu * w_sched * 2.5; 
-    beDrainRate = SIM.mu * (1 - w_sched) * 0.8;
-  } else {
-    // Baseline: Longest-Queue-First 严格优先级
-    if (SIM.q_relay > SIM.q_be1 && SIM.q_relay > SIM.q_ts) {
-      relayDrainRate = SIM.mu * 1.5;
-      beDrainRate = 0.2;
-    } else {
-      relayDrainRate = 0.2;
-      beDrainRate = SIM.mu * 1.0;
+// ══════════════════════════════════════
+// 网络拓扑渲染
+// ══════════════════════════════════════
+function drawNet(){
+  const ctx=netCtx, W=netCanvas.width, H=netCanvas.height;
+  ctx.clearRect(0,0,W,H);
+
+  // 背景网格
+  ctx.strokeStyle='rgba(26,37,64,0.45)'; ctx.lineWidth=0.5;
+  for(let x=0;x<W;x+=40){ ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke(); }
+  for(let y=0;y<H;y+=40){ ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke(); }
+
+  // 层级分隔线
+  const layerY1=H*0.43, layerY2=H*0.73;
+  ctx.strokeStyle='rgba(26,37,70,0.7)'; ctx.lineWidth=1; ctx.setLineDash([6,8]);
+  ctx.beginPath(); ctx.moveTo(W*0.04,layerY1); ctx.lineTo(W*0.96,layerY1); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(W*0.04,layerY2); ctx.lineTo(W*0.96,layerY2); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle='rgba(74,96,128,0.5)'; ctx.font='9px monospace'; ctx.textAlign='left';
+  ctx.fillText('核心层', W*0.04+4, layerY1-5);
+  ctx.fillText('汇聚层', W*0.04+4, layerY2-5);
+
+  // 粒子尾迹（先画）
+  SIM.particles.forEach(p=>{
+    if(p.trail.length>1){
+      const col=p.type==='ts'?'#00e5ff':p.type==='be'?'#ff6b35':'#a8ff3e';
+      for(let i=1;i<p.trail.length;i++){
+        const a=i/p.trail.length*0.4;
+        ctx.save(); ctx.globalAlpha=a; ctx.strokeStyle=col; ctx.lineWidth=1.5;
+        ctx.beginPath(); ctx.moveTo(p.trail[i-1].x,p.trail[i-1].y); ctx.lineTo(p.trail[i].x,p.trail[i].y); ctx.stroke();
+        ctx.restore();
+      }
     }
-  }
+  });
 
-  return { rho, w_sched, relayDrainRate, beDrainRate };
+  // 碰撞闪光
+  SIM.flashes.forEach(f=>{
+    const a=f.life/f.maxLife; ctx.save(); ctx.globalAlpha=a;
+    const g=ctx.createRadialGradient(f.x,f.y,0,f.x,f.y,35*a);
+    g.addColorStop(0,'rgba(255,214,10,0.9)'); g.addColorStop(1,'transparent');
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(f.x,f.y,35,0,Math.PI*2); ctx.fill();
+    ctx.restore();
+  });
+
+  // 边（光纤链路）
+  EDGES.forEach(([a,b])=>{
+    const pa=nodePos(a), pb=nodePos(b);
+    const active=SIM.particles.some(p=>p.edge===a+'-'+b||p.edge===b+'-'+a);
+    ctx.save();
+    if(active){ ctx.shadowColor='rgba(0,229,255,0.4)'; ctx.shadowBlur=8; ctx.strokeStyle='rgba(0,229,255,0.55)'; ctx.lineWidth=1.8; }
+    else { ctx.strokeStyle='rgba(26,37,64,0.9)'; ctx.lineWidth=1; }
+    ctx.beginPath(); ctx.moveTo(pa.x,pa.y); ctx.lineTo(pb.x,pb.y); ctx.stroke();
+    ctx.restore();
+  });
+
+  // 粒子（画在边之上）
+  SIM.particles.forEach(p=>{
+    const pos=getParticlePos(p, p.progress);
+    const col=p.type==='ts'?'#00e5ff':p.type==='be'?'#ff6b35':'#a8ff3e';
+    const r=p.type==='ts'?5:p.type==='relay'?6:4;
+    ctx.save(); ctx.shadowColor=col; ctx.shadowBlur=14; ctx.fillStyle=col;
+    ctx.beginPath(); ctx.arc(pos.x,pos.y,r,0,Math.PI*2); ctx.fill();
+    ctx.restore();
+  });
+
+  // 节点渲染
+  Object.keys(NODES).forEach(key=>{
+    const n=NODES[key], {x,y}=nodePos(key);
+    const isGW2=key==='gw2';
+    const color=n.role==='spine'?'#00e5ff':n.role==='leaf'?'#4488ff':'#a8ff3e';
+    const size=n.role==='spine'?17:n.role==='leaf'?13:15;
+
+    // 外光晕
+    ctx.save(); ctx.shadowColor=color; ctx.shadowBlur=18;
+    ctx.beginPath(); ctx.arc(x,y,size,0,Math.PI*2); ctx.fillStyle=color+'1a'; ctx.fill();
+    ctx.strokeStyle=color; ctx.lineWidth=1.4; ctx.stroke();
+    ctx.restore();
+    // 内实心
+    ctx.save(); ctx.shadowColor=color; ctx.shadowBlur=8;
+    ctx.beginPath(); ctx.arc(x,y,size*0.42,0,Math.PI*2); ctx.fillStyle=color; ctx.fill();
+    ctx.restore();
+    // 节点文字
+    ctx.save(); ctx.fillStyle='#c8d8f0'; ctx.font='bold 10px monospace';
+    ctx.textAlign='center';
+    n.label.split('\n').forEach((line,i)=>ctx.fillText(line, x, y+size+13+i*12));
+    ctx.restore();
+
+    // GW2 中继缓存占用弧（更清晰）
+    if(isGW2){
+      const pct=Math.min(SIM.q_relay/SIM.C_max,1);
+      const danger=pct>0.8;
+      ctx.save();
+      ctx.beginPath(); ctx.arc(x,y,size+5,0,Math.PI*2);
+      ctx.strokeStyle=danger?'rgba(255,68,68,0.3)':'rgba(168,255,62,0.15)'; ctx.lineWidth=1; ctx.stroke();
+      if(pct>0){
+        ctx.beginPath(); ctx.arc(x,y,size+5,-Math.PI/2,-Math.PI/2+pct*Math.PI*2);
+        ctx.strokeStyle=danger?'#ff4444':'#a8ff3e';
+        ctx.lineWidth=3; ctx.lineCap='round'; ctx.stroke();
+      }
+      ctx.fillStyle=danger?'#ff4444':'#a8ff3e'; ctx.font='bold 9px monospace'; ctx.textAlign='center';
+      ctx.fillText(Math.round(pct*100)+'%', x, y-size-8);
+      ctx.restore();
+    }
+  });
+
+  // 碰撞标注（Spine1 右上角）
+  const sp=nodePos('spine1');
+  if(SIM.collisions>0){
+    ctx.save(); ctx.fillStyle='rgba(255,214,10,0.15)'; ctx.strokeStyle='rgba(255,214,10,0.4)';
+    ctx.lineWidth=1; ctx.beginPath(); ctx.roundRect(sp.x+20,sp.y-32,82,20,4); ctx.fill(); ctx.stroke();
+    ctx.fillStyle='#ffd60a'; ctx.font='bold 9px monospace'; ctx.textAlign='left';
+    ctx.fillText('⚡ 碰撞: '+SIM.collisions, sp.x+25, sp.y-18);
+    ctx.restore();
+  }
 }
 
-function simStep() {
-  tick++;
-  
-  // MMPP ON-OFF 状态机: 模拟 AI All-Reduce 同步风暴
-  if (tick % 120 === 0) { 
-    SIM.isTsBurstState = Math.random() < 0.25; // 25%概率进入突发
-    $('burstLabel').classList.toggle('active', SIM.isTsBurstState);
-    if(SIM.isTsBurstState) addLog('🔥 AIDC 集群进入同步突发期 (Burst ON)', 'warn');
-  }
-  const currentLts = SIM.isTsBurstState ? Math.min(SIM.lts * 3.5, 0.95) : SIM.lts * 0.3;
-  
-  // 流量生成
-  const tsArr = Math.random() < currentLts / SIM.mu;
-  const beArr = Math.random() < SIM.lbe / SIM.mu;
+// ══════════════════════════════════════
+// 核心调度逻辑
+// ══════════════════════════════════════
+function calcAndSchedule(currentLts){
+  const {lbe,mu,alpha,beta,gamma,q_relay,C_max,be1Lat,strategy} = SIM;
+  const rho_ts=Math.min(currentLts/mu,0.95);
+  const rho_be=lbe/mu;
+  const rho=Math.min(rho_ts+rho_be,0.99);
 
-  // 碰撞检测与网络调度逻辑
-  let collision = false;
-  if(tsArr && beArr && Math.random() < 0.6) {
-    collision = true; SIM.collisions++;
-    SIM.flashes.push({x:nodePos('spine1').x, y:nodePos('spine1').y, life:20, maxLife:20});
-    
-    // 发生碰撞，旁路路由机制生效 (发往中继)
-    SIM.q_relay += 4.5 + Math.random()*2;
-    spawnParticle('relay', 'spine1', 'gw2'); // 碰撞的BE转移到GW2
-    spawnParticle('ts', 'gw1', 'spine1');
-    spawnParticle('ts', 'spine1', 'gw3');    // TS畅通无阻
+  let w_sched=0, p_alpha=0, p_beta=0, p_gamma=0;
+  let relayDrainRate=0, beDrainRate=0;
+
+  if(strategy==='proposed'){
+    // α项: 延迟敏感度（反比于当前BE延迟，越拥堵α贡献越低）
+    p_alpha = alpha * (0.5 / (0.5 + (be1Lat||1)/1000));
+    // β项: 缓冲区占用率线性感知
+    p_beta  = beta  * (q_relay / C_max);
+    // γ项: 时间老化防饥饿（周期性tick）
+    p_gamma = gamma * ((tick%200)/200.0);
+    w_sched = p_alpha + p_beta + p_gamma;
+    relayDrainRate = mu * w_sched * 2.8;
+    beDrainRate    = mu * (1-w_sched) * 0.9;
   } else {
-    if(tsArr) { spawnParticle('ts','gw1','spine1'); spawnParticle('ts','spine1','gw3'); }
-    if(beArr) { spawnParticle('be','gw2','spine2'); spawnParticle('be','spine2','gw3'); }
+    // Baseline: 最长队列绝对优先
+    if(q_relay > SIM.q_be1){ relayDrainRate=mu*1.6; beDrainRate=0.15; }
+    else { relayDrainRate=0.15; beDrainRate=mu*1.0; }
+    p_alpha=0; p_beta=0; p_gamma=0;
+  }
+  return {rho, rho_ts, w_sched, p_alpha, p_beta, p_gamma, relayDrainRate, beDrainRate};
+}
+
+// ══════════════════════════════════════
+// 主仿真步骤
+// ══════════════════════════════════════
+function simStep(){
+  for(let s=0;s<simSpeed;s++) _step();
+}
+function _step(){
+  tick++;
+
+  // MMPP ON-OFF 状态机
+  if(tick%100===0){
+    SIM.isTsBurstState = Math.random()<0.22;
+    $('burstLabel').classList.toggle('active', SIM.isTsBurstState);
+    if(SIM.isTsBurstState) addLog('🔥 AIDC 集群进入同步突发期 (Burst ON) — λ_ts 放大 3.5×', 'warn');
+  }
+  const currentLts = SIM.isTsBurstState ? Math.min(SIM.lts*3.5,0.92) : SIM.lts*0.35;
+
+  // 流量到达
+  const tsArr = Math.random() < currentLts/SIM.mu;
+  const beArr = Math.random() < SIM.lbe/SIM.mu;
+
+  // 碰撞检测与旁路路由（仅在渲染帧生成粒子）
+  let collision=false;
+  if(tsArr && beArr && Math.random()<0.55){
+    collision=true; SIM.collisions++;
+    const sp=nodePos('spine1');
+    SIM.flashes.push({x:sp.x,y:sp.y,life:22,maxLife:22});
+    SIM.q_relay += 4+Math.random()*2.5;
+    // 正确路径：TS直通，BE旁路走曲线回到GW2
+    spawnParticle('ts','gw1','leaf1');
+    spawnParticle('ts','leaf1','spine1');
+    spawnParticle('ts','spine1','leaf3');
+    spawnParticle('ts','leaf3','gw3');
+    spawnParticle('be','gw2','leaf2');
+    spawnParticle('be','leaf2','spine1');   // 到达Spine1被检测到碰撞
+    spawnParticle('relay','spine1','gw2');  // 曲线旁路回GW2中继
+  } else {
+    if(tsArr){ spawnParticle('ts','gw1','leaf1'); spawnParticle('ts','leaf1','spine1'); spawnParticle('ts','spine1','gw3'); }
+    if(beArr){ spawnParticle('be','gw2','leaf2'); spawnParticle('be','leaf2','spine2'); }
   }
 
-  // 计算调度出队率
-  const S = calcAndSchedule(currentLts);
+  const S=calcAndSchedule(currentLts);
 
-  // 更新队列长度 (入队 + 碰撞增量 - 调度出队)
-  SIM.q_ts = Math.max(0, SIM.q_ts + (tsArr?2.5:-1.5) + Math.random()-0.5);
-  SIM.q_be1 = Math.max(0, SIM.q_be1 + (beArr?2.0:0) - S.beDrainRate);
-  SIM.q_relay = Math.max(0, SIM.q_relay - S.relayDrainRate);
+  // 队列更新
+  SIM.q_ts    = Math.max(0, SIM.q_ts+(tsArr?2.0:-1.2)+Math.random()-0.5);
+  SIM.q_be1   = Math.max(0, SIM.q_be1+(beArr?1.8:0)-S.beDrainRate+(collision?1.5:0));
+  SIM.q_relay = Math.max(0, SIM.q_relay-S.relayDrainRate);
 
-  // 惩罚与丢包计算
-  if(SIM.q_be1 > SIM.C_max){ SIM.totalDropped++; SIM.q_be1 = SIM.C_max*0.9; }
-  if(SIM.q_relay > SIM.C_max){ SIM.totalDropped++; SIM.q_relay = SIM.C_max*0.9; }
+  // 丢包
+  if(SIM.q_be1>SIM.C_max){ SIM.totalDropped++; SIM.q_be1=SIM.C_max*0.88; }
+  if(SIM.q_relay>SIM.C_max){ SIM.totalDropped++; SIM.q_relay=SIM.C_max*0.88; }
   SIM.totalSent++;
 
-  // 表现层数据（延迟评估）
-  // W = L / λ (Little's Law 反推)
-  SIM.tsLat = (SIM.q_ts / Math.max(currentLts, 0.01)) * 5; 
-  SIM.be1Lat = (SIM.q_be1 / Math.max(SIM.lbe, 0.01)) * 10 + (SIM.strategy==='baseline' && SIM.q_relay>10 ? 40 : 0);
-  
-  let currentThroughput = SIM.mu * (1 - (SIM.totalDropped/Math.max(1,SIM.totalSent))) * (SIM.isTsBurstState?1.5:0.8);
+  // 延迟（Little's Law: W = L/λ）
+  SIM.tsLat  = (SIM.q_ts  / Math.max(currentLts,0.01)) * 4.5;
+  SIM.be1Lat = (SIM.q_be1 / Math.max(SIM.lbe,0.01))   * 9.0 + (SIM.strategy==='baseline'&&SIM.q_relay>8?35:0);
+  const dropRate=SIM.totalDropped/Math.max(1,SIM.totalSent);
+  const currentThr=SIM.mu*(1-dropRate)*(SIM.isTsBurstState?1.4:0.85);
 
-  // 记录图表历史
-  SIM.tsLatHistory.push(SIM.tsLat); SIM.beLatHistory.push(SIM.be1Lat); SIM.thrHistory.push(currentThroughput);
-  if(SIM.tsLatHistory.length > 200){ SIM.tsLatHistory.shift(); SIM.beLatHistory.shift(); SIM.thrHistory.shift(); }
+  // 历史记录
+  SIM.tsLatHistory.push(SIM.tsLat); SIM.beLatHistory.push(SIM.be1Lat); SIM.thrHistory.push(currentThr);
+  if(SIM.tsLatHistory.length>220){ SIM.tsLatHistory.shift(); SIM.beLatHistory.shift(); SIM.thrHistory.shift(); }
 
-  // 更新视觉
-  SIM.particles.forEach(p => p.progress += p.speed);
-  SIM.particles = SIM.particles.filter(p => p.progress < 1);
-  SIM.flashes.forEach(f => f.life--); SIM.flashes = SIM.flashes.filter(f => f.life>0);
+  // 对比窗口
+  SIM.snapWindow.ts.push(SIM.tsLat); SIM.snapWindow.be.push(SIM.be1Lat);
+  SIM.snapWindow.drop.push(dropRate); SIM.snapWindow.thr.push(currentThr);
+  if(SIM.snapWindow.ts.length>100){ SIM.snapWindow.ts.shift(); SIM.snapWindow.be.shift(); SIM.snapWindow.drop.shift(); SIM.snapWindow.thr.shift(); }
 
-  updateUI(S, currentLts, currentThroughput);
-  drawNet(); drawLatChart(); drawThrChart();
+  // 粒子更新（含尾迹）
+  SIM.particles.forEach(p=>{
+    p.progress += p.speed;
+    const pos=getParticlePos(p, Math.min(p.progress,1));
+    p.trail.push({x:pos.x,y:pos.y});
+    if(p.trail.length>8) p.trail.shift();
+  });
+  SIM.particles = SIM.particles.filter(p=>p.progress<1);
+  SIM.flashes.forEach(f=>f.life--); SIM.flashes=SIM.flashes.filter(f=>f.life>0);
+
+  // 队列告警
+  const relayPct=SIM.q_relay/SIM.C_max;
+  $('queueAlert').classList.toggle('show', relayPct>0.8);
+  // 队列条危险状态
+  $('bRelay').classList.toggle('danger', relayPct>0.8);
+  $('mRelayUtil').classList.toggle('alert', relayPct>0.8);
+
+  if(tick%50===0) updateUI(S, currentLts, currentThr, dropRate);
+  else updateUIFast(S, currentLts, currentThr, dropRate);
+
+  if(simSpeed===1){
+    drawNet(); drawLatChart(); drawThrChart();
+  } else if(tick%simSpeed===0){
+    drawNet(); drawLatChart(); drawThrChart();
+  }
+
+  if(tick%60===0) addLog(`[tick ${String(tick).padStart(4,'0')}] λ'=${currentLts.toFixed(2)} ρ=${S.rho.toFixed(3)} W=${S.w_sched.toFixed(3)} TS=${SIM.tsLat.toFixed(1)}ms S=${currentThr.toFixed(2)}Gbps`, 'ts');
 }
 
-function updateUI(S, currentLts, currentThroughput) {
-  $('mTsLat').textContent = SIM.tsLat.toFixed(1) + ' ms';
-  $('mBe1Lat').textContent = SIM.be1Lat.toFixed(1) + ' ms';
-  $('mRelayUtil').textContent = ((SIM.q_relay/SIM.C_max)*100).toFixed(1) + '%';
-  $('mThroughput').textContent = currentThroughput.toFixed(2) + ' Gbps';
-  $('mDropRate').textContent = ((SIM.totalDropped/Math.max(1,SIM.totalSent))*100).toFixed(2) + '%';
-  $('mCollisions').textContent = SIM.collisions;
+function updateUI(S, currentLts, currentThr, dropRate){
+  $('mTsLat').textContent    = SIM.tsLat.toFixed(1)+' ms';
+  $('mBe1Lat').textContent   = SIM.be1Lat.toFixed(1)+' ms';
+  $('mRelayUtil').textContent= ((SIM.q_relay/SIM.C_max)*100).toFixed(1)+'%';
+  $('mThroughput').textContent= currentThr.toFixed(2)+' Gbps';
+  $('mDropRate').textContent = (dropRate*100).toFixed(2)+'%';
+  $('mCollisions').textContent= SIM.collisions;
 
-  const setBar = (id, bId, v) => { const pct=Math.min(v/SIM.C_max,1)*100; $(id).textContent=pct.toFixed(0)+'%'; $(bId).style.width=pct+'%'; };
-  setBar('qTs', 'bTs', SIM.q_ts); setBar('qBe1', 'bBe1', SIM.q_be1); setBar('qRelay', 'bRelay', SIM.q_relay);
+  const setBar=(id,bId,v)=>{ const pct=Math.min(v/SIM.C_max,1)*100; $(id).textContent=pct.toFixed(0)+'%'; $(bId).style.width=pct+'%'; };
+  setBar('qTs','bTs',SIM.q_ts); setBar('qBe1','bBe1',SIM.q_be1); setBar('qRelay','bRelay',SIM.q_relay);
 
+  // 排队论公式
   $('fLambda').textContent = currentLts.toFixed(2);
-  $('fRho').textContent = S.rho.toFixed(3);
-  $('fW').textContent = SIM.strategy==='proposed' ? S.w_sched.toFixed(3) : 'N/A';
-  $('fL').textContent = (SIM.q_relay * 0.1).toFixed(2);
-  $('fWts').textContent = (currentLts*2 / Math.max(0.01, 1-S.rho)).toFixed(2) + ' ms';
+  $('fRho').textContent    = S.rho.toFixed(3);
+  $('fW').textContent      = SIM.strategy==='proposed' ? S.w_sched.toFixed(3) : 'N/A';
+  $('fL').textContent      = (SIM.q_relay*0.12).toFixed(2);
+  $('fWts').textContent    = (currentLts*2/Math.max(0.01,1-S.rho_ts)).toFixed(2)+' ms';
+
+  // 权重分解（新增）
+  if(SIM.strategy==='proposed'){
+    $('wAlpha').textContent = S.p_alpha.toFixed(3);
+    $('wBeta').textContent  = S.p_beta.toFixed(3);
+    $('wGamma').textContent = S.p_gamma.toFixed(3);
+    $('wTotal').textContent = S.w_sched.toFixed(3);
+    const tot=S.p_alpha+S.p_beta+S.p_gamma||1;
+    $('wbA').style.flex = S.p_alpha/tot; $('wbB').style.flex = S.p_beta/tot; $('wbG').style.flex = S.p_gamma/tot;
+  } else {
+    ['wAlpha','wBeta','wGamma','wTotal'].forEach(id=>$(id).textContent='N/A');
+  }
+}
+function updateUIFast(S, currentLts, currentThr, dropRate){ updateUI(S, currentLts, currentThr, dropRate); }
+
+// ══════════════════════════════════════
+// 图表绘制（带Y轴刻度 + 图例标注）
+// ══════════════════════════════════════
+function drawChart(ctx, datasets, yLabel){
+  const W=ctx.canvas.width, H=ctx.canvas.height;
+  const PL=34, PR=8, PT=4, PB=16; // padding
+  const cW=W-PL-PR, cH=H-PT-PB;
+  ctx.clearRect(0,0,W,H);
+
+  const allVals=datasets.flatMap(d=>d.data);
+  const yMax=Math.max(10,...allVals)*1.15;
+
+  // 网格
+  ctx.strokeStyle='rgba(26,37,64,0.6)'; ctx.lineWidth=0.5; ctx.setLineDash([3,5]);
+  const steps=4;
+  for(let i=0;i<=steps;i++){
+    const y=PT+cH*(1-i/steps);
+    ctx.beginPath(); ctx.moveTo(PL,y); ctx.lineTo(PL+cW,y); ctx.stroke();
+    // Y轴刻度
+    ctx.fillStyle='rgba(74,96,128,0.8)'; ctx.font='8px monospace'; ctx.textAlign='right';
+    ctx.fillText((yMax*i/steps).toFixed(0), PL-3, y+3);
+  }
+  ctx.setLineDash([]);
+
+  // 曲线
+  datasets.forEach(({data,color})=>{
+    if(data.length<2) return;
+    ctx.save(); ctx.strokeStyle=color; ctx.lineWidth=1.5; ctx.shadowColor=color; ctx.shadowBlur=5;
+    ctx.beginPath();
+    data.forEach((v,i)=>{
+      const x=PL+cW*(i/(data.length-1||1));
+      const y=PT+cH*(1-Math.min(v/yMax,1));
+      i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    });
+    ctx.stroke();
+    // 最新值标注
+    if(data.length>0){
+      const lastV=data[data.length-1];
+      const lx=PL+cW, ly=PT+cH*(1-Math.min(lastV/yMax,1));
+      ctx.beginPath(); ctx.arc(lx,ly,3,0,Math.PI*2); ctx.fillStyle=color; ctx.fill();
+    }
+    ctx.restore();
+  });
+
+  // X轴标签
+  ctx.fillStyle='rgba(74,96,128,0.6)'; ctx.font='7px monospace'; ctx.textAlign='center';
+  ctx.fillText('← 200 ticks →', PL+cW/2, H-2);
 }
 
-function drawLineChart(ctx, data1, data2, c1, c2) {
-  const W = ctx.canvas.width, H = ctx.canvas.height; ctx.clearRect(0,0,W,H);
-  ctx.strokeStyle='rgba(26,37,64,0.5)'; ctx.lineWidth=0.5; for(let y=0;y<H;y+=30){ ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke(); }
-  const yMax = Math.max(10, ...data1, ...(data2||[])) * 1.2;
-  const draw = (arr, col) => {
-    if(arr.length<2) return;
-    ctx.save(); ctx.strokeStyle=col; ctx.lineWidth=1.5; ctx.shadowColor=col; ctx.shadowBlur=4; ctx.beginPath();
-    arr.forEach((v,i) => { const x=(i/arr.length)*W, y=H-(v/yMax)*H; i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); });
-    ctx.stroke(); ctx.restore();
-  };
-  draw(data1, c1); if(data2) draw(data2, c2);
+function drawLatChart(){
+  drawChart(latCtx, [
+    {data:SIM.tsLatHistory, color:'#00e5ff'},
+    {data:SIM.beLatHistory, color:'#ff6b35'}
+  ], 'ms');
 }
-function drawLatChart() { drawLineChart(latCtx, SIM.tsLatHistory, SIM.beLatHistory, '#00e5ff','#ff6b35'); }
-function drawThrChart() { drawLineChart(thrCtx, SIM.thrHistory, null, '#a8ff3e', null); }
-
-function addLog(msg, cls='info') {
-  const log = $('logArea');
-  const d = document.createElement('div'); d.className = `log-line ${cls}`; d.textContent = `[Tick ${String(tick).padStart(4,'0')}] ${msg}`;
-  log.appendChild(d); if(log.childNodes.length>50) log.firstChild.remove();
-  log.scrollTop = log.scrollHeight;
+function drawThrChart(){
+  drawChart(thrCtx, [{data:SIM.thrHistory, color:'#a8ff3e'}], 'Gbps');
 }
 
-function injectBurst() { 
-  SIM.q_ts += 25; SIM.q_be1 += 15; 
-  addLog('>> 外部强制注入微秒级突发流量风暴！', 'warn'); 
+// ══════════════════════════════════════
+// 日志
+// ══════════════════════════════════════
+function addLog(msg, cls='info'){
+  const log=$('logArea');
+  const d=document.createElement('div'); d.className=`log-line ${cls}`;
+  d.textContent=`[${String(tick).padStart(4,'0')}] ${msg}`;
+  log.appendChild(d); while(log.childNodes.length>60) log.firstChild.remove();
+  log.scrollTop=log.scrollHeight;
+}
+
+function restartInterval(){
+  clearInterval(simInterval);
+  simInterval=setInterval(simStep, 50);
 }
 
 // 初始化
-updateGamma();
-drawNet();
-addLog('系统初始化就绪，点击上方 [开始仿真] 按钮...', 'info');
-
+updateGamma(); drawNet();
+addLog('系统就绪 — 点击 [开始仿真] 启动。建议：先运行30秒后暂停保存快照，切换策略再对比。', 'info');
+addLog('排队论模型: M/G/1 Priority Queue | W = α·p1 + β·p2 + γ·p3 | 最优解: α=0.33, β=0.50, γ=0.17', 'info');
 </script>
 </body>
 </html>
